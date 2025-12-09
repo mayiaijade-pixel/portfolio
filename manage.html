@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reel Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; --bg: #0c0f17; --panel: #121828; --border: #1f2a44; --text: #eaf0ff; --muted: #9fb1d4; --accent: #7cf0ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #0f1422; border-bottom: 1px solid var(--border); }
+    main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+    h1 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
+    input, select, textarea { width: 100%; background: #0f1422; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 14px; }
+    textarea { resize: vertical; min-height: 80px; }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .actions { display: flex; gap: 8px; margin-top: 12px; }
+    button { background: var(--accent); color: #041018; border: none; border-radius: 8px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; font-size: 14px; }
+    tr:hover { background: rgba(255, 255, 255, 0.02); }
+    .pill { display: inline-flex; padding: 4px 8px; border-radius: 999px; background: rgba(124, 240, 255, 0.12); color: var(--accent); font-size: 12px; }
+    .note { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Reel Manager</h1>
+    <a href="./index.html" style="color: var(--accent); text-decoration: none;">포트폴리오 보기</a>
+  </header>
+  <main>
+    <section class="panel">
+      <div class="grid">
+        <div>
+          <label>제목</label>
+          <input id="title" placeholder="예: City in Motion" />
+        </div>
+        <div>
+          <label>타입</label>
+          <select id="type">
+            <option value="youtube">YouTube</option>
+            <option value="video">MP4 URL</option>
+          </select>
+        </div>
+        <div>
+          <label>소스(URL)</label>
+          <input id="src" placeholder="https://www.youtube.com/watch?v=..." />
+          <div class="note">YouTube 링크나 mp4 직접 링크</div>
+        </div>
+        <div>
+          <label>재생 길이(초, 선택)</label>
+          <input id="duration" type="number" min="1" placeholder="예: 20" />
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label>설명</label>
+        <textarea id="description" placeholder="짧은 설명을 적어주세요"></textarea>
+      </div>
+      <div class="actions">
+        <button id="save">저장 / 추가</button>
+        <button id="new" class="secondary">새로 입력</button>
+        <button id="reset" class="secondary">기본 데이터로 리셋</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin-top:0;">등록된 Reels</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>제목</th>
+            <th>타입</th>
+            <th>소스</th>
+            <th>길이</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="list"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module">
+    import { fetchReels, getReels, setReels, toJson } from './data-store.js';
+
+    const $ = (id) => document.getElementById(id);
+    const listEl = $('list');
+    let editingId = null;
+
+    const renderList = () => {
+      const data = getReels();
+      listEl.innerHTML = '';
+      data.forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.title || ''}</td>
+          <td><span class="pill">${item.type}</span></td>
+          <td style="max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.src}</td>
+          <td>${item.duration || ''}</td>
+          <td><button class="secondary" data-id="${item.id}">편집</button></td>
+        `;
+        tr.querySelector('button').addEventListener('click', () => loadForm(item.id));
+        listEl.appendChild(tr);
+      });
+    };
+
+    const loadForm = (id) => {
+      const data = getReels();
+      const item = data.find((d) => d.id === id);
+      if (!item) return;
+      editingId = item.id;
+      $('title').value = item.title || '';
+      $('type').value = item.type || 'youtube';
+      $('src').value = item.src || '';
+      $('duration').value = item.duration || '';
+      $('description').value = item.description || '';
+    };
+
+    const clearForm = () => {
+      editingId = null;
+      $('title').value = '';
+      $('type').value = 'youtube';
+      $('src').value = '';
+      $('duration').value = '';
+      $('description').value = '';
+    };
+
+    const saveToServer = async (data) => {
+      const res = await fetch('/api/reels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || '서버 저장 실패');
+      }
+    };
+
+    $('save').addEventListener('click', async () => {
+      const title = $('title').value.trim();
+      const type = $('type').value;
+      const src = $('src').value.trim();
+      const duration = Number($('duration').value) || undefined;
+      const description = $('description').value.trim();
+
+      if (!title || !src) {
+        alert('제목과 소스 URL은 필수입니다.');
+        return;
+      }
+
+      const data = getReels();
+      if (editingId) {
+        const idx = data.findIndex((d) => d.id === editingId);
+        if (idx > -1) {
+          data[idx] = { ...data[idx], title, type, src, duration, description };
+        }
+      } else {
+        const id = `${type}-${Date.now()}`;
+        data.push({ id, title, type, src, duration, description });
+      }
+
+      try {
+        setReels(data);
+        await saveToServer(data);
+        renderList();
+        clearForm();
+        alert('서버에 저장되었습니다. 새로고침 후 확인하세요.');
+      } catch (e) {
+        alert(`서버 저장 실패: ${e.message}`);
+      }
+    });
+
+    $('new').addEventListener('click', clearForm);
+    $('reset').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    fetchReels().then(() => {
+      renderList();
+    }).catch(() => {
+      renderList();
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,13 @@
+{
+  "name": "scroll-motion-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Scroll-synced video portfolio",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^0.23.1"
+  }
+}
+

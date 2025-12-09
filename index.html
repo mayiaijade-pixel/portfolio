@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KIM HYEWON - AI Artist / Video Creator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05060a;
+      --panel: rgba(255, 255, 255, 0.04);
+      --text: #e9ecf5;
+      --muted: #9aa5c4;
+      --accent: #7cf0ff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(124, 240, 255, 0.12), transparent 25%), radial-gradient(circle at 80% 0%, rgba(255, 117, 209, 0.12), transparent 25%), var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(5, 6, 10, 0.9), rgba(5, 6, 10, 0.75));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .badge a {
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+    }
+
+    main {
+      min-height: 100vh;
+    }
+
+    .hero {
+      padding: 84px 24px 56px; /* reduced ~30% */
+      max-width: 1080px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 6vw, 64px);
+      margin: 0 0 16px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      margin: 0 auto 32px;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .reels {
+      display: flex;
+      flex-direction: column;
+      gap: 12vh;
+      padding: 40px 0 120px;
+    }
+
+    .reel {
+      position: relative;
+      width: min(1100px, 92vw);
+      margin: 0 auto;
+      border-radius: 32px;
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      isolation: isolate;
+    }
+
+    .reel video,
+    .reel iframe {
+      width: 100%;
+      height: 80vh;
+      object-fit: cover;
+      display: block;
+      filter: none; /* preserve original luminance */
+    }
+
+    .yt-player {
+      position: relative;
+      width: 100%;
+      height: 80vh;
+      background: #000;
+    }
+
+    .yt-error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--muted);
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.65), rgba(0,0,0,0.85));
+    }
+
+    .yt-error a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(124, 240, 255, 0.4);
+      padding-bottom: 2px;
+    }
+
+    .reel .overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.35) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 32px;
+      pointer-events: none;
+    }
+
+    .reel h2 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 4vw, 32px);
+    }
+
+    .reel p {
+      margin: 0;
+      color: #c7d1eb;
+      max-width: 600px;
+      line-height: 1.5;
+    }
+
+    .meta {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 14px rgba(124, 240, 255, 0.8);
+    }
+
+    .progress {
+      position: fixed;
+      right: 22px;
+      top: 120px;
+      width: 2px;
+      height: 60vh;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      z-index: 11;
+    }
+
+    .progress__bar {
+      width: 100%;
+      height: var(--scroll, 0%);
+      background: linear-gradient(180deg, var(--accent), #ff75d1);
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(124, 240, 255, 0.6);
+    }
+
+    footer {
+      padding: 48px 24px 64px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      header { padding: 14px 18px; }
+      .hero { padding: 68px 18px 28px; }
+      .reels { gap: 9vh; }
+      .reel video { height: 70vh; }
+      .reel .overlay { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">KIM HYEWON</div>
+    <div class="badge">
+      <a href="https://www.youtube.com/@aiplane_jade" target="_blank" aria-label="YouTube">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.7-.8-2.1-.8C15.8 5 12 5 12 5h0s-3.8 0-6.9.2c-.4 0-1.3 0-2.1.8-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.6C2 14.4 2.2 16 2.2 16s.2 1.4.8 2c.8.8 1.8.8 2.2.8 1.6.2 6.8.2 6.8.2s3.8 0 6.9-.2c.4 0 1.3 0 2.1-.8.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.6c0-1.6-.2-3.2-.2-3.2ZM10 14.7V8.7l5.7 3-5.7 3Z"></path>
+        </svg>
+      </a>
+      <a href="https://www.instagram.com/" target="_blank" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="M7 3C4.2 3 3 4.2 3 7v10c0 2.8 1.2 4 4 4h10c2.8 0 4-1.2 4-4V7c0-2.8-1.2-4-4-4H7Zm0 2h10c1.5 0 2 .5 2 2v10c0 1.5-.5 2-2 2H7c-1.5 0-2-.5-2-2V7c0-1.5.5-2 2-2Zm10.3 1.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 2a2 2 0 1 1-.001 3.999A2 2 0 0 1 12 10Z"></path>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <div class="progress" aria-hidden="true">
+    <div class="progress__bar"></div>
+  </div>
+
+  <main>
+    <section class="hero">
+      <h1>🎬 AI Artist</h1>
+      <p>
+        AI 와 함께 하는 새로운 시대, 새로운 창조
+      </p>
+    </section>
+
+    <section class="reels">
+      <!-- reels will be injected from data-store.js -->
+    </section>
+  </main>
+
+  <footer>
+    © 2025 KIM HYEWON — AI Artist / Video Creator
+  </footer>
+
+  <script type="module">
+    import { fetchReels, getReels } from './data-store.js';
+
+    // Lazy load YouTube IFrame API once.
+    const ytReady = new Promise((resolve) => {
+      if (window.YT && window.YT.Player) {
+        resolve(window.YT);
+        return;
+      }
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+      window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+    });
+
+    const getYouTubeId = (url) => {
+      try {
+        const u = new URL(url);
+        if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+        if (u.searchParams.get('v')) return u.searchParams.get('v');
+        const parts = u.pathname.split('/');
+        return parts.pop();
+      } catch (e) {
+        return url;
+      }
+    };
+
+    const reels = [];
+
+    const buildReels = (data) => {
+      const list = data && data.length ? data : getReels();
+      const container = document.querySelector('.reels');
+      container.innerHTML = '';
+
+      if (!list || !list.length) {
+        container.innerHTML = '<p style="color: var(--muted); text-align:center; padding: 40px 16px;">표시할 영상이 없습니다. reels.json을 확인하세요.</p>';
+        return;
+      }
+
+      list.forEach((item) => {
+        const article = document.createElement('article');
+        article.className = 'reel';
+        article.dataset.duration = item.duration || '';
+        article.dataset.type = item.type;
+
+        if (item.type === 'youtube') {
+          article.dataset.videoId = getYouTubeId(item.src);
+          article.innerHTML = `
+            <div class="yt-player">
+              <div class="yt-error">
+                YouTube 임베드가 차단된 영상이거나 로컬 파일(file://)에서 재생이 제한되었습니다.
+                <br />
+                <a target="_blank" rel="noreferrer" href="${item.src}">YouTube에서 직접 보기</a>
+              </div>
+            </div>
+            <div class="overlay">
+              <h2>${item.title || ''}</h2>
+              <p>${item.description || ''}</p>
+              <div class="meta">
+                <span class="dot"></span>
+                <span>YouTube</span>
+              </div>
+            </div>
+          `;
+        } else {
+          article.innerHTML = `
+            <video preload="metadata" muted playsinline>
+              <source src="${item.src}" type="video/mp4">
+            </video>
+            <div class="overlay">
+              <h2>${item.title || ''}</h2>
+              <p>${item.description || ''}</p>
+              <div class="meta">
+                <span class="dot"></span>
+                <span>${item.duration || ''}s</span>
+              </div>
+            </div>
+          `;
+        }
+
+        container.appendChild(article);
+      });
+
+      // rebuild reel controls
+      reels.length = 0;
+      Array.from(document.querySelectorAll('.reel')).forEach((el) => {
+        const type = el.dataset.type || 'video';
+        const declaredDuration = Number(el.dataset.duration) || 0;
+
+        if (type === 'youtube') {
+          const videoId = el.dataset.videoId;
+          const host = el.querySelector('.yt-player');
+          const errorOverlay = el.querySelector('.yt-error');
+          let player = null;
+          let duration = declaredDuration || 30;
+          let ready = false;
+
+          ytReady.then((YT) => {
+            player = new YT.Player(host, {
+              videoId,
+              width: '100%',
+              height: '100%',
+              playerVars: {
+                controls: 0,
+                modestbranding: 1,
+                rel: 0,
+                playsinline: 1,
+                fs: 0,
+                disablekb: 1,
+                origin: window.location.origin || undefined,
+                mute: 1
+              },
+              events: {
+                onReady: (event) => {
+                  const d = event.target.getDuration();
+                  if (d) duration = d;
+                  event.target.mute();
+                  event.target.playVideo();
+                  ready = true;
+                  if (errorOverlay) errorOverlay.style.display = 'none';
+                },
+                onError: (event) => {
+                  console.warn('YouTube error', event.data);
+                  if (errorOverlay) errorOverlay.style.display = 'flex';
+                }
+              }
+            });
+          });
+
+          reels.push({
+            el,
+            type,
+            getDuration: () => duration,
+            seek: (time) => { if (player) player.seekTo(time, false); },
+            play: () => { if (player) player.playVideo(); },
+            pause: () => { if (player) player.pauseVideo(); },
+            isReady: () => Boolean(player) && ready
+          });
+          return;
+        }
+
+        const video = el.querySelector('video');
+        const targetDuration = declaredDuration || null;
+        video.pause();
+
+        const ready = () => (video.duration && !Number.isNaN(video.duration)) ? video.duration : (targetDuration || 15);
+
+        video.addEventListener('loadedmetadata', () => {
+          if (targetDuration && video.duration && Math.abs(video.duration - targetDuration) > 1) {
+            video.dataset.actual = video.duration.toFixed(2);
+          }
+        });
+
+        reels.push({
+          el,
+          type,
+          getDuration: ready,
+          seek: (time) => { video.currentTime = time; },
+          play: () => { if (video.paused) { video.play().catch(() => video.pause()); video.pause(); } },
+          pause: () => { if (!video.paused) video.pause(); },
+          isReady: () => true
+        });
+      });
+    };
+
+    // Scroll-linked scrubber: map scroll progress per section to the video timeline.
+    let ticking = false;
+    const progressBar = document.querySelector('.progress__bar');
+
+    const clamp = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v));
+
+    const update = () => {
+      ticking = false;
+      const viewport = window.innerHeight;
+
+      const docHeight = document.documentElement.scrollHeight - viewport;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const globalProgress = clamp(docHeight ? scrollY / docHeight : 0);
+      progressBar.style.setProperty('--scroll', `${globalProgress * 100}%`);
+
+      // 1) 찾기: 화면에서 가장 많이 보이는 릴
+      let activeIndex = -1;
+      let bestRatio = 0;
+      const visibility = reels.map(({ el }) => {
+        const rect = el.getBoundingClientRect();
+        const visibleHeight = Math.min(rect.bottom, viewport) - Math.max(rect.top, 0);
+        const ratio = clamp(visibleHeight / Math.max(rect.height, 1));
+        return { rect, ratio };
+      });
+      visibility.forEach(({ ratio }, idx) => {
+        if (ratio > bestRatio) {
+          bestRatio = ratio;
+          activeIndex = idx;
+        }
+      });
+      if (activeIndex === -1) activeIndex = 0;
+
+      // 2) 재생/정지: 가장 많이 보이는 한 개만 재생
+      reels.forEach(({ getDuration, seek, play, pause, isReady }, idx) => {
+        const { rect } = visibility[idx];
+        const offsetStart = viewport * 0.15;
+        const offsetEnd = viewport * 0.85;
+        const start = offsetStart - rect.height * 0.25;
+        const end = offsetEnd + rect.height * 0.25;
+        const local = clamp((start - rect.top) / (end - start));
+
+        // 여전히 부드러운 포지셔닝을 위해 스크롤 대비 타임라인을 얕게만 맞춤
+        const duration = getDuration();
+        const targetTime = local * duration;
+        const eased = targetTime * 0.7;
+        if (isReady() && Number.isFinite(eased)) seek(eased);
+
+        if (idx === activeIndex) play();
+        else pause();
+      });
+    };
+
+    const requestTick = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+
+    ['scroll', 'resize'].forEach((event) => {
+      window.addEventListener(event, requestTick, { passive: true });
+    });
+
+    // Initial run: fetch shared data then build.
+    fetchReels().then((data) => {
+      buildReels(data);
+      requestTick();
+    });
+  </script>
+</body>
+</html>
+
