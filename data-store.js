@@ -1,5 +1,5 @@
-// JSON-backed data store so everyone sees the same data (served from /api/reels).
-// On Vercel this is backed by Vercel Blob; locally server.js will read/write reels.json.
+// Static data store for a purely static build (no server / no blob).
+// Edit this file and redeploy to change the public data.
 
 export const defaultReels = [
   {
@@ -46,20 +46,8 @@ export const defaultReels = [
 let currentReels = defaultReels;
 
 export async function fetchReels() {
-  try {
-    const res = await fetch(`/api/reels?ts=${Date.now()}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (Array.isArray(data)) {
-      currentReels = data;
-      return currentReels;
-    }
-    throw new Error('Invalid data shape');
-  } catch (err) {
-    console.warn('Failed to fetch reels.json, using default', err);
-    currentReels = defaultReels;
-    return currentReels;
-  }
+  currentReels = defaultReels;
+  return currentReels;
 }
 
 export function getReels() {

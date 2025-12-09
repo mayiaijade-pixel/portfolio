@@ -131,19 +131,17 @@
       $('description').value = '';
     };
 
-    const saveToServer = async (data) => {
-      const res = await fetch('/api/reels', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || '서버 저장 실패');
-      }
+    const downloadJson = () => {
+      const blob = new Blob([toJson()], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'reels.json';
+      a.click();
+      URL.revokeObjectURL(url);
     };
 
-    $('save').addEventListener('click', async () => {
+    $('save').addEventListener('click', () => {
       const title = $('title').value.trim();
       const type = $('type').value;
       const src = $('src').value.trim();
@@ -166,15 +164,11 @@
         data.push({ id, title, type, src, duration, description });
       }
 
-      try {
-        setReels(data);
-        await saveToServer(data);
-        renderList();
-        clearForm();
-        alert('서버에 저장되었습니다. 새로고침 후 확인하세요.');
-      } catch (e) {
-        alert(`서버 저장 실패: ${e.message}`);
-      }
+      setReels(data);
+      renderList();
+      clearForm();
+      alert('저장되었습니다. 정적 사이트이므로 다운로드한 JSON을 업데이트하려면 수동으로 교체하세요.');
+      downloadJson();
     });
 
     $('new').addEventListener('click', clearForm);
